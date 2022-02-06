@@ -1,5 +1,0 @@
-pip
-cryptography
-winshell
-pywin32
-anvil-uplink
