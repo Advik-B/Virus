@@ -6,6 +6,7 @@ from comtypes.client import CreateObject
 from comtypes.client.lazybind import Dispatch
 from comtypes.automation import VARIANT
 
+
 class Test(unittest.TestCase):
     def test_dict(self):
         d = CreateObject("Scripting.Dictionary", dynamic=True)
@@ -72,7 +73,7 @@ class Test(unittest.TestCase):
         d.Item["value"] = s.CompareMode
 
         a = d.Item["object"]
- 
+
         self.assertEqual(d.Item["object"], s)
         self.assertEqual(d.Item["object"].CompareMode, 42)
         self.assertEqual(d.Item["value"], 42)
@@ -89,8 +90,7 @@ class Test(unittest.TestCase):
 
         # iter(d)
         keys = [x for x in d]
-        self.assertEqual(d.Keys(),
-                             tuple([x for x in d]))
+        self.assertEqual(d.Keys(), tuple([x for x in d]))
 
         # d[key] = value
         # d[key] -> value
@@ -98,6 +98,7 @@ class Test(unittest.TestCase):
         self.assertEqual(d["blah"], "blarg")
         # d(key) -> value
         self.assertEqual(d("blah"), "blarg")
+
 
 if __name__ == "__main__":
     unittest.main()

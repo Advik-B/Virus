@@ -17,6 +17,7 @@ from comtypes.gen import urlhistLib
 class _(object):
     def __ctypes_from_outparam__(self):
         from comtypes.util import cast_field
+
         result = type(self)()
         for n, _ in self._fields_:
             setattr(result, n, getattr(self, n))
@@ -25,7 +26,9 @@ class _(object):
         windll.ole32.CoTaskMemFree(cast_field(self, "pwcsTitle", c_void_p))
         return result
 
+
 from comtypes.test.find_memleak import find_memleak
+
 
 class Test(unittest.TestCase):
     def check_leaks(self, func):
@@ -36,13 +39,15 @@ class Test(unittest.TestCase):
         hist = CreateObject(urlhistLib.UrlHistory)
         for x in hist.EnumURLS():
             x.pwcsUrl, x.pwcsTitle
-##            print (x.pwcsUrl, x.pwcsTitle)
-##            print x
+        ##            print (x.pwcsUrl, x.pwcsTitle)
+        ##            print x
         def doit():
             for x in hist.EnumURLs():
                 pass
+
         doit()
         self.check_leaks(doit)
+
 
 if __name__ == "__main__":
     unittest.main()

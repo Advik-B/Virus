@@ -1,6 +1,18 @@
 from ctypes import (
-    POINTER, byref, c_byte, c_char, c_double, c_float, c_int, c_int64, c_short,
-    c_ubyte, c_ushort, c_uint, c_uint64, pointer,
+    POINTER,
+    byref,
+    c_byte,
+    c_char,
+    c_double,
+    c_float,
+    c_int,
+    c_int64,
+    c_short,
+    c_ubyte,
+    c_ushort,
+    c_uint,
+    c_uint64,
+    pointer,
 )
 import datetime
 import decimal
@@ -9,9 +21,27 @@ import unittest
 
 from comtypes import IUnknown, GUID
 from comtypes.automation import (
-    VARIANT, DISPPARAMS, VT_NULL, VT_EMPTY, VT_ERROR, VT_I1, VT_I2, VT_I4,
-    VT_I8, VT_UI1, VT_UI2, VT_UI4, VT_UI8, VT_R4, VT_R8, VT_BYREF, VT_BSTR,
-    VT_DATE, VT_DECIMAL, VT_CY,)
+    VARIANT,
+    DISPPARAMS,
+    VT_NULL,
+    VT_EMPTY,
+    VT_ERROR,
+    VT_I1,
+    VT_I2,
+    VT_I4,
+    VT_I8,
+    VT_UI1,
+    VT_UI2,
+    VT_UI4,
+    VT_UI8,
+    VT_R4,
+    VT_R8,
+    VT_BYREF,
+    VT_BSTR,
+    VT_DATE,
+    VT_DECIMAL,
+    VT_CY,
+)
 from comtypes.typeinfo import LoadRegTypeLib
 from comtypes.test import get_numpy
 from comtypes.test.find_memleak import find_memleak
@@ -26,7 +56,6 @@ def get_refcnt(comptr):
 
 
 class VariantTestCase(unittest.TestCase):
-
     def test_constants(self):
         empty = VARIANT.empty
         self.assertEqual(empty.vt, VT_EMPTY)
@@ -46,7 +75,7 @@ class VariantTestCase(unittest.TestCase):
         rc = get_refcnt(tlb)
 
         p = tlb.QueryInterface(IUnknown)
-        self.assertEqual(get_refcnt(tlb), rc+1)
+        self.assertEqual(get_refcnt(tlb), rc + 1)
 
         del p
         self.assertEqual(get_refcnt(tlb), rc)
@@ -58,12 +87,12 @@ class VariantTestCase(unittest.TestCase):
         rc = get_refcnt(tlb)
 
         v = VARIANT(tlb)
-        self.assertEqual(get_refcnt(tlb), rc+1)
+        self.assertEqual(get_refcnt(tlb), rc + 1)
 
         p = v.value
-        self.assertEqual(get_refcnt(tlb), rc+2)
+        self.assertEqual(get_refcnt(tlb), rc + 2)
         del p
-        self.assertEqual(get_refcnt(tlb), rc+1)
+        self.assertEqual(get_refcnt(tlb), rc + 1)
 
         v.value = None
         self.assertEqual(get_refcnt(tlb), rc)
@@ -86,10 +115,7 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(result, values)
 
     def test_pythonobjects(self):
-        if sys.version_info >= (3, 0):
-            objects = [None, 42, 3.14, True, False, "abc", "abc", 7]
-        else:
-            objects = [None, 42, 3.14, True, False, "abc", u"abc", 7L]
+        objects = [None, 42, 3.14, True, False, "abc", "abc", 7]
         for x in objects:
             v = VARIANT(x)
             self.assertEqual(x, v.value)
@@ -97,23 +123,18 @@ class VariantTestCase(unittest.TestCase):
     def test_integers(self):
         v = VARIANT()
 
-        if (hasattr(sys, "maxint")):
+        if hasattr(sys, "maxint"):
             # this test doesn't work in Python 3000
             v.value = sys.maxsize
             self.assertEqual(v.value, sys.maxsize)
             self.assertEqual(type(v.value), int)
 
             v.value += 1
-            self.assertEqual(v.value, sys.maxsize+1)
+            self.assertEqual(v.value, sys.maxsize + 1)
             if sys.version_info >= (3, 0):
                 self.assertEqual(type(v.value), int)
-            else:
-                self.assertEqual(type(v.value), long)
 
-        if sys.version_info >= (3, 0):
-            v.value = 1
-        else:
-            v.value = 1L
+        v.value = 1
         self.assertEqual(v.value, 1)
         self.assertEqual(type(v.value), int)
 
@@ -137,7 +158,7 @@ class VariantTestCase(unittest.TestCase):
         dates = [
             np.datetime64("2000-01-01T05:30:00", "s"),
             np.datetime64("1800-01-01T05:30:00", "ms"),
-            np.datetime64("2000-01-01T12:34:56", "us")
+            np.datetime64("2000-01-01T12:34:56", "us"),
         ]
 
         for date in dates:
@@ -147,7 +168,7 @@ class VariantTestCase(unittest.TestCase):
             self.assertEqual(v.value, date.astype(datetime.datetime))
 
     def test_decimal_as_currency(self):
-        value = decimal.Decimal('3.14')
+        value = decimal.Decimal("3.14")
 
         v = VARIANT()
         v.value = value
@@ -159,22 +180,21 @@ class VariantTestCase(unittest.TestCase):
         v.vt = VT_DECIMAL
         v.decVal.Lo64 = 1234
         v.decVal.scale = 3
-        self.assertEqual(v.value, decimal.Decimal('1.234'))
+        self.assertEqual(v.value, decimal.Decimal("1.234"))
 
         v.decVal.sign = 0x80
-        self.assertEqual(v.value, decimal.Decimal('-1.234'))
+        self.assertEqual(v.value, decimal.Decimal("-1.234"))
 
         v.decVal.scale = 28
-        self.assertEqual(v.value, decimal.Decimal('-1.234e-25'))
+        self.assertEqual(v.value, decimal.Decimal("-1.234e-25"))
 
         v.decVal.scale = 12
         v.decVal.Hi32 = 100
-        self.assertEqual(
-            v.value, decimal.Decimal('-1844674407.370955162834'))
+        self.assertEqual(v.value, decimal.Decimal("-1844674407.370955162834"))
 
     def test_BSTR(self):
         v = VARIANT()
-        v.value = u"abc\x00123\x00"
+        v.value = "abc\x00123\x00"
         self.assertEqual(v.value, "abc\x00123\x00")
 
         v.value = None
@@ -192,10 +212,10 @@ class VariantTestCase(unittest.TestCase):
 
     def test_UDT(self):
         from comtypes.gen.TestComServerLib import MYCOLOR
+
         v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
         value = v.value
-        self.assertEqual((1.0, 2.0, 3.0),
-                             (value.red, value.green, value.blue))
+        self.assertEqual((1.0, 2.0, 3.0), (value.red, value.green, value.blue))
 
         def func():
             v = VARIANT(MYCOLOR(red=1.0, green=2.0, blue=3.0))
@@ -206,18 +226,19 @@ class VariantTestCase(unittest.TestCase):
 
     def test_ctypes_in_variant(self):
         v = VARIANT()
-        objs = [(c_ubyte(3), VT_UI1),
-                (c_char("x"), VT_UI1),
-                (c_byte(3), VT_I1),
-                (c_ushort(3), VT_UI2),
-                (c_short(3), VT_I2),
-                (c_uint(3), VT_UI4),
-                (c_uint64(2**64), VT_UI8),
-                (c_int(3), VT_I4),
-                (c_int64(2**32), VT_I8),
-                (c_double(3.14), VT_R8),
-                (c_float(3.14), VT_R4),
-                ]
+        objs = [
+            (c_ubyte(3), VT_UI1),
+            (c_char("x"), VT_UI1),
+            (c_byte(3), VT_I1),
+            (c_ushort(3), VT_UI2),
+            (c_short(3), VT_I2),
+            (c_uint(3), VT_UI4),
+            (c_uint64(2**64), VT_UI8),
+            (c_int(3), VT_I4),
+            (c_int64(2**32), VT_I8),
+            (c_double(3.14), VT_R8),
+            (c_float(3.14), VT_R4),
+        ]
         for value, vt in objs:
             v.value = value
             self.assertEqual(v.vt, vt)
@@ -243,7 +264,7 @@ class NdArrayTest(unittest.TestCase):
         np = get_numpy()
         if np is None:
             return
-        for dtype in ('float32', 'float64'):
+        for dtype in ("float32", "float64"):
             # because of FLOAT rounding errors, whi will only work for
             # certain values!
             a = np.array([1.0, 2.0, 3.0, 4.5], dtype=dtype)
@@ -255,8 +276,16 @@ class NdArrayTest(unittest.TestCase):
         np = get_numpy()
         if np is None:
             return
-        for dtype in ('int8', 'int16', 'int32', 'int64', 'uint8',
-                'uint16', 'uint32', 'uint64'):
+        for dtype in (
+            "int8",
+            "int16",
+            "int32",
+            "int64",
+            "uint8",
+            "uint16",
+            "uint32",
+            "uint64",
+        ):
             a = np.array((1, 1, 1, 1), dtype=dtype)
             v = VARIANT()
             v.value = a
@@ -268,8 +297,7 @@ class NdArrayTest(unittest.TestCase):
             return
 
         now = datetime.datetime.now()
-        a = np.array(
-            [11, "22", None, True, now, decimal.Decimal("3.14")]).reshape(2,3)
+        a = np.array([11, "22", None, True, now, decimal.Decimal("3.14")]).reshape(2, 3)
         v = VARIANT()
         v.value = a
         self.assertTrue((v.value == a).all())
@@ -278,6 +306,7 @@ class NdArrayTest(unittest.TestCase):
 class ArrayTest(unittest.TestCase):
     def test_double(self):
         import array
+
         for typecode in "df":
             # because of FLOAT rounding errors, whi will only work for
             # certain values!
@@ -288,25 +317,32 @@ class ArrayTest(unittest.TestCase):
 
     def test_int(self):
         import array
+
         for typecode in "bhiBHIlL":
             a = array.array(typecode, (1, 1, 1, 1))
             v = VARIANT()
             v.value = a
             self.assertEqual(v.value, (1, 1, 1, 1))
 
+
 ################################################################
 def run_test(rep, msg, func=None, previous={}, results={}):
-##    items = [None] * rep
+    ##    items = [None] * rep
     if func is None:
         locals = sys._getframe(1).f_locals
         func = eval("lambda: %s" % msg, locals)
     items = range(rep)
     from time import clock
+
     start = clock()
     for i in items:
-        func(); func(); func(); func(); func()
+        func()
+        func()
+        func()
+        func()
+        func()
     stop = clock()
-    duration = (stop-start)*1e6/5/rep
+    duration = (stop - start) * 1e6 / 5 / rep
     try:
         prev = previous[msg]
     except KeyError:
@@ -314,7 +350,9 @@ def run_test(rep, msg, func=None, previous={}, results={}):
         delta = 0.0
     else:
         delta = duration / prev * 100.0
-        print("%40s: %7.1f us, time = %5.1f%%" % (msg, duration, delta), file=sys.stderr)
+        print(
+            "%40s: %7.1f us, time = %5.1f%%" % (msg, duration, delta), file=sys.stderr
+        )
     results[msg] = duration
     return delta
 
@@ -323,6 +361,7 @@ def check_perf(rep=20000):
     from ctypes import c_int, byref
     from comtypes.automation import VARIANT
     import comtypes.automation
+
     print(comtypes.automation)
     variable = c_int()
     by_var = byref(variable)
@@ -354,13 +393,22 @@ def check_perf(rep=20000):
     d += run_test(rep, "VARIANT([42,]).value", previous=previous, results=results)
 
     print("Average duration %.1f%%" % (d / 10))
+
+
 ##    cPickle.dump(results, open("result.pickle", "wb"))
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         unittest.main()
     except SystemExit:
         pass
     import comtypes
-    print("Running benchmark with comtypes %s/Python %s ..." % (comtypes.__version__, sys.version.split()[0],))
+
+    print(
+        "Running benchmark with comtypes %s/Python %s ..."
+        % (
+            comtypes.__version__,
+            sys.version.split()[0],
+        )
+    )
     check_perf()

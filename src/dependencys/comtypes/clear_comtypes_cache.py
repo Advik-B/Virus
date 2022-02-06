@@ -2,6 +2,7 @@ import os
 import sys
 import shutil
 
+
 def get_next_cache_dir():
     work_dir = os.getcwd()
     try:
@@ -9,6 +10,7 @@ def get_next_cache_dir():
         # during installation process
         os.chdir(os.path.dirname(sys.executable))
         import comtypes.client
+
         return comtypes.client._code_cache._find_gen_dir()
     except ImportError:
         return None
@@ -27,10 +29,10 @@ def remove_directory(directory, silent):
             _remove(directory)
         else:
             try:
-                confirm = raw_input('Remove comtypes cache directories? (y/n): ')
+                confirm = raw_input("Remove comtypes cache directories? (y/n): ")
             except NameError:
-                confirm = input('Remove comtypes cache directories? (y/n): ')
-            if confirm.lower() == 'y':
+                confirm = input("Remove comtypes cache directories? (y/n): ")
+            if confirm.lower() == "y":
                 _remove(directory)
             else:
                 print('Directory "%s" NOT removed' % directory)

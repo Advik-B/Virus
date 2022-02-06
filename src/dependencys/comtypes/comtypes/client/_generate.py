@@ -8,6 +8,7 @@ import comtypes.tools.tlbparser
 import importlib
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 if sys.version_info >= (3, 0):
@@ -17,35 +18,39 @@ else:
 
 PATH = os.environ["PATH"].split(os.pathsep)
 
+
 def _my_import(fullname):
     # helper function to import dotted modules
     import comtypes.gen
-    if comtypes.client.gen_dir \
-           and comtypes.client.gen_dir not in comtypes.gen.__path__:
+
+    if comtypes.client.gen_dir and comtypes.client.gen_dir not in comtypes.gen.__path__:
         comtypes.gen.__path__.append(comtypes.client.gen_dir)
-    return __import__(fullname, globals(), locals(), ['DUMMY'])
+    return __import__(fullname, globals(), locals(), ["DUMMY"])
+
 
 def _name_module(tlib):
     # Determine the name of a typelib wrapper module.
     libattr = tlib.GetLibAttr()
-    modname = "_%s_%s_%s_%s" % \
-              (str(libattr.guid)[1:-1].replace("-", "_"),
-               libattr.lcid,
-               libattr.wMajorVerNum,
-               libattr.wMinorVerNum)
+    modname = "_%s_%s_%s_%s" % (
+        str(libattr.guid)[1:-1].replace("-", "_"),
+        libattr.lcid,
+        libattr.wMajorVerNum,
+        libattr.wMinorVerNum,
+    )
     return "comtypes.gen." + modname
+
 
 def _resolve_filename(tlib_string, dirpath):
     """Tries to make sense of a type library specified as a string.
-    
+
     Args:
         tlib_string: type library designator
         dirpath: a directory to relativize the location
 
     Returns:
 
-      (abspath, True) or (relpath, False), 
-    
+      (abspath, True) or (relpath, False),
+
     where relpath is an unresolved path."""
     assert isinstance(tlib_string, basestring)
     # pathname of type library
@@ -109,39 +114,47 @@ def GetModule(tlib):
     pathname = None
     if isinstance(tlib, base_text_type):
         tlib_string = tlib
-        # if a relative pathname is used, we try to interpret it relative to the 
+        # if a relative pathname is used, we try to interpret it relative to the
         # directory of the calling module (if not from command line)
         frame = sys._getframe(1)
         _file_ = frame.f_globals.get("__file__", None)
-        pathname, path_exists = _resolve_filename(tlib, _file_ and os.path.dirname(_file_))
+        pathname, path_exists = _resolve_filename(
+            tlib, _file_ and os.path.dirname(_file_)
+        )
         logger.debug("GetModule(%s), resolved: %s", pathname, path_exists)
         # in any case, attempt to load and if tlib_string is not valid, then raise
         # as "OSError: [WinError -2147312566] Error loading type library/DLL"
-        tlib = comtypes.typeinfo.LoadTypeLibEx(pathname) # don't register
+        tlib = comtypes.typeinfo.LoadTypeLibEx(pathname)  # don't register
         if not path_exists:
-            # try to get path after loading, but this only works if already registered            
+            # try to get path after loading, but this only works if already registered
             pathname = comtypes.tools.tlbparser.get_tlib_filename(tlib)
             if pathname is None:
                 logger.info("GetModule(%s): could not resolve to a filename", tlib)
                 pathname = tlib_string
         # if above path torture resulted in an absolute path, then the file exists (at this point)!
-        assert not(os.path.isabs(pathname)) or os.path.exists(pathname)
+        assert not (os.path.isabs(pathname)) or os.path.exists(pathname)
     elif isinstance(tlib, comtypes.GUID):
         # tlib contain a clsid
         clsid = str(tlib)
-        
+
         # lookup associated typelib in registry
         if sys.version_info >= (3, 0):
             import winreg
         else:
             import _winreg as winreg
-        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\TypeLib" % clsid, 0, winreg.KEY_READ) as key:
+        with winreg.OpenKey(
+            winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\TypeLib" % clsid, 0, winreg.KEY_READ
+        ) as key:
             typelib = winreg.EnumValue(key, 0)[1]
-        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Version" % clsid, 0, winreg.KEY_READ) as key:
+        with winreg.OpenKey(
+            winreg.HKEY_CLASSES_ROOT, r"CLSID\%s\Version" % clsid, 0, winreg.KEY_READ
+        ) as key:
             version = winreg.EnumValue(key, 0)[1].split(".")
-        
+
         logger.debug("GetModule(%s)", typelib)
-        tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(typelib), int(version[0]), int(version[1]), 0)
+        tlib = comtypes.typeinfo.LoadRegTypeLib(
+            comtypes.GUID(typelib), int(version[0]), int(version[1]), 0
+        )
     elif isinstance(tlib, (tuple, list)):
         # sequence containing libid and version numbers
         logger.debug("GetModule(%s)", (tlib,))
@@ -149,8 +162,9 @@ def GetModule(tlib):
     elif hasattr(tlib, "_reg_libid_"):
         # a COMObject implementation
         logger.debug("GetModule(%s)", tlib)
-        tlib = comtypes.typeinfo.LoadRegTypeLib(comtypes.GUID(tlib._reg_libid_),
-                                                *tlib._reg_version_)
+        tlib = comtypes.typeinfo.LoadRegTypeLib(
+            comtypes.GUID(tlib._reg_libid_), *tlib._reg_version_
+        )
     else:
         # an ITypeLib pointer
         logger.debug("GetModule(%s)", tlib.GetLibAttr())
@@ -178,12 +192,16 @@ def GetModule(tlib):
     # determine the Python module name
     fullname = _name_module(tlib)
     modname = fullname.split(".")[-1]
-    code = "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (modname, modname)
+    code = "from comtypes.gen import %s\nglobals().update(%s.__dict__)\n" % (
+        modname,
+        modname,
+    )
     code += "__name__ = 'comtypes.gen.%s'" % modulename
     if comtypes.client.gen_dir is None:
         mod = types.ModuleType("comtypes.gen." + modulename)
-        mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
-                                    "<memory>")
+        mod.__file__ = os.path.join(
+            os.path.abspath(comtypes.gen.__path__[0]), "<memory>"
+        )
         exec(code, mod.__dict__)
         sys.modules["comtypes.gen." + modulename] = mod
         setattr(comtypes.gen, modulename, mod)
@@ -196,6 +214,7 @@ def GetModule(tlib):
     if hasattr(importlib, "invalidate_caches"):
         importlib.invalidate_caches()
     return _my_import("comtypes.gen." + modulename)
+
 
 def _CreateWrapper(tlib, pathname):
     # helper which creates and imports the real typelib wrapper module.
@@ -214,6 +233,7 @@ def _CreateWrapper(tlib, pathname):
 
     # generate the module since it doesn't exist or is out of date
     from comtypes.tools.tlbparser import generate_module
+
     if comtypes.client.gen_dir is None:
         if sys.version_info >= (3, 0):
             import io
@@ -229,8 +249,9 @@ def _CreateWrapper(tlib, pathname):
     if comtypes.client.gen_dir is None:
         code = ofi.getvalue()
         mod = types.ModuleType(fullname)
-        mod.__file__ = os.path.join(os.path.abspath(comtypes.gen.__path__[0]),
-                                    "<memory>")
+        mod.__file__ = os.path.join(
+            os.path.abspath(comtypes.gen.__path__[0]), "<memory>"
+        )
         exec(code, mod.__dict__)
         sys.modules[fullname] = mod
         setattr(comtypes.gen, modname, mod)
@@ -241,6 +262,7 @@ def _CreateWrapper(tlib, pathname):
             importlib.invalidate_caches()
         mod = _my_import(fullname)
     return mod
+
 
 ################################################################
 

@@ -3,6 +3,7 @@ import unittest
 from comtypes.client import CreateObject
 from comtypes.automation import VARIANT
 
+
 class Test(unittest.TestCase):
     def test(self, dynamic=False):
         d = CreateObject("Scripting.Dictionary", dynamic=dynamic)
@@ -30,6 +31,7 @@ class Test(unittest.TestCase):
 
     def test_dispatch(self):
         return self.test(dynamic=True)
+
 
 if __name__ == "__main__":
     unittest.main()

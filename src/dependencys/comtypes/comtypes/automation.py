@@ -11,18 +11,21 @@ from comtypes import IUnknown, GUID, IID, STDMETHOD, BSTR, COMMETHOD, COMError
 from comtypes.hresult import *
 from comtypes.patcher import Patch
 from comtypes import npsupport
+
 try:
     from comtypes import _safearray
 except (ImportError, AttributeError):
+
     class _safearray(object):
         tagSAFEARRAY = None
+
 
 from ctypes.wintypes import DWORD, LONG, UINT, VARIANT_BOOL, WCHAR, WORD
 
 
 if sys.version_info >= (3, 0):
-    int_types = (int, )
-    str_types = (str, )
+    int_types = (int,)
+    str_types = (str,)
     base_text_type = str
 else:
     int_types = (int, long)
@@ -59,7 +62,7 @@ _com_null_date = datetime.datetime(1899, 12, 30, 0, 0, 0)
 
 ################################################################
 # VARIANT, in all it's glory.
-VARENUM = c_int # enum
+VARENUM = c_int  # enum
 VT_EMPTY = 0
 VT_NULL = 1
 VT_I2 = 2
@@ -116,19 +119,23 @@ VT_TYPEMASK = 4095
 
 class tagCY(Structure):
     _fields_ = [("int64", c_longlong)]
+
+
 CY = tagCY
 CURRENCY = CY
 
 
 class tagDEC(Structure):
-    _fields_ = [("wReserved", c_ushort),
-                ("scale", c_ubyte),
-                ("sign", c_ubyte),
-                ("Hi32", c_ulong),
-                ("Lo64", c_ulonglong)]
+    _fields_ = [
+        ("wReserved", c_ushort),
+        ("scale", c_ubyte),
+        ("sign", c_ubyte),
+        ("Hi32", c_ulong),
+        ("Lo64", c_ulonglong),
+    ]
 
     def as_decimal(self):
-        """ Convert a tagDEC struct to Decimal.
+        """Convert a tagDEC struct to Decimal.
 
         See http://msdn.microsoft.com/en-us/library/cc234586.aspx for the tagDEC
         specification.
@@ -136,7 +143,7 @@ class tagDEC(Structure):
         """
         digits = (self.Hi32 << 64) + self.Lo64
         decimal_str = "{0}{1}e-{2}".format(
-            '-' if self.sign else '',
+            "-" if self.sign else "",
             digits,
             self.scale,
         )
@@ -155,8 +162,8 @@ class tagVARIANT(Structure):
             # this is the ctypes version - functional as well.
             class U_VARIANT2(Union):
                 class _tagBRECORD(Structure):
-                    _fields_ = [("pvRecord", c_void_p),
-                                ("pRecInfo", POINTER(IUnknown))]
+                    _fields_ = [("pvRecord", c_void_p), ("pRecInfo", POINTER(IUnknown))]
+
                 _fields_ = [
                     ("VT_BOOL", VARIANT_BOOL),
                     ("VT_I1", c_byte),
@@ -175,20 +182,22 @@ class tagVARIANT(Structure):
                     ("c_wchar_p", c_wchar_p),
                     ("c_void_p", c_void_p),
                     ("pparray", POINTER(POINTER(_safearray.tagSAFEARRAY))),
-
                     ("bstrVal", BSTR),
                     ("_tagBRECORD", _tagBRECORD),
-                    ]
+                ]
                 _anonymous_ = ["_tagBRECORD"]
-            _fields_ = [("vt", VARTYPE),
-                        ("wReserved1", c_ushort),
-                        ("wReserved2", c_ushort),
-                        ("wReserved3", c_ushort),
-                        ("_", U_VARIANT2)
+
+            _fields_ = [
+                ("vt", VARTYPE),
+                ("wReserved1", c_ushort),
+                ("wReserved2", c_ushort),
+                ("wReserved3", c_ushort),
+                ("_", U_VARIANT2),
             ]
-        _fields_ = [("__VARIANT_NAME_2", __tagVARIANT),
-                    ("decVal", DECIMAL)]
+
+        _fields_ = [("__VARIANT_NAME_2", __tagVARIANT), ("decVal", DECIMAL)]
         _anonymous_ = ["__VARIANT_NAME_2"]
+
     _fields_ = [("__VARIANT_NAME_1", U_VARIANT1)]
     _anonymous_ = ["__VARIANT_NAME_1"]
 
@@ -211,6 +220,7 @@ class tagVARIANT(Structure):
         if isinstance(value, cls):
             return value
         return cls(value)
+
     from_param = classmethod(from_param)
 
     def __setitem__(self, index, value):
@@ -228,8 +238,11 @@ class tagVARIANT(Structure):
         _VariantClear(self)
         if value is None:
             self.vt = VT_NULL
-        elif (hasattr(value, '__len__') and len(value) == 0
-                and not isinstance(value, base_text_type)):
+        elif (
+            hasattr(value, "__len__")
+            and len(value) == 0
+            and not isinstance(value, base_text_type)
+        ):
             self.vt = VT_NULL
         # since bool is a subclass of int, this check must come before
         # the check for int
@@ -281,12 +294,14 @@ class tagVARIANT(Structure):
         elif isinstance(value, datetime.datetime):
             delta = value - _com_null_date
             # a day has 24 * 60 * 60 = 86400 seconds
-            com_days = delta.days + (delta.seconds + delta.microseconds * 1e-6) / 86400.
+            com_days = (
+                delta.days + (delta.seconds + delta.microseconds * 1e-6) / 86400.0
+            )
             self.vt = VT_DATE
             self._.VT_R8 = com_days
         elif npsupport.isdatetime64(value):
             com_days = value - npsupport.com_null_date64
-            com_days /= npsupport.numpy.timedelta64(1, 'D')
+            com_days /= npsupport.numpy.timedelta64(1, "D")
             self.vt = VT_DATE
             self._.VT_R8 = com_days
         elif decimal is not None and isinstance(value, decimal.Decimal):
@@ -322,6 +337,7 @@ class tagVARIANT(Structure):
         elif isinstance(value, Structure) and hasattr(value, "_recordinfo_"):
             guids = value._recordinfo_
             from comtypes.typeinfo import GetRecordInfoFromGuids
+
             ri = GetRecordInfoFromGuids(*guids)
             self.vt = VT_RECORD
             # Assigning a COM pointer to a structure field does NOT
@@ -419,7 +435,7 @@ class tagVARIANT(Structure):
                 # We should/could return a NULL COM pointer.
                 # But the code generation must be able to construct one
                 # from the __repr__ of it.
-                return None # XXX?
+                return None  # XXX?
             ptr = cast(val, POINTER(IUnknown))
             # cast doesn't call AddRef (it should, imo!)
             ptr.AddRef()
@@ -430,7 +446,7 @@ class tagVARIANT(Structure):
             val = self._.c_void_p
             if not val:
                 # See above.
-                return None # XXX?
+                return None  # XXX?
             ptr = cast(val, POINTER(IDispatch))
             # cast doesn't call AddRef (it should, imo!)
             ptr.AddRef()
@@ -438,6 +454,7 @@ class tagVARIANT(Structure):
                 return ptr.__ctypes_from_outparam__()
             else:
                 from comtypes.client.dynamic import Dispatch
+
                 return Dispatch(ptr)
         # see also c:/sf/pywin32/com/win32com/src/oleargs.cpp
         elif self.vt & VT_BYREF:
@@ -472,7 +489,7 @@ class tagVARIANT(Structure):
     def __getitem__(self, index):
         if index != 0:
             raise IndexError(index)
-        if self.vt == VT_BYREF|VT_VARIANT:
+        if self.vt == VT_BYREF | VT_VARIANT:
             v = VARIANT()
             # apparently VariantCopyInd doesn't work always with
             # VT_BYREF|VT_VARIANT, so do it manually.
@@ -483,31 +500,30 @@ class tagVARIANT(Structure):
             _VariantCopyInd(v, self)
             return v.value
 
-
-# these are missing:
-##    getter[VT_ERROR]
-##    getter[VT_ARRAY]
-##    getter[VT_BYREF|VT_UI1]
-##    getter[VT_BYREF|VT_I2]
-##    getter[VT_BYREF|VT_I4]
-##    getter[VT_BYREF|VT_R4]
-##    getter[VT_BYREF|VT_R8]
-##    getter[VT_BYREF|VT_BOOL]
-##    getter[VT_BYREF|VT_ERROR]
-##    getter[VT_BYREF|VT_CY]
-##    getter[VT_BYREF|VT_DATE]
-##    getter[VT_BYREF|VT_BSTR]
-##    getter[VT_BYREF|VT_UNKNOWN]
-##    getter[VT_BYREF|VT_DISPATCH]
-##    getter[VT_BYREF|VT_ARRAY]
-##    getter[VT_BYREF|VT_VARIANT]
-##    getter[VT_BYREF]
-##    getter[VT_BYREF|VT_DECIMAL]
-##    getter[VT_BYREF|VT_I1]
-##    getter[VT_BYREF|VT_UI2]
-##    getter[VT_BYREF|VT_UI4]
-##    getter[VT_BYREF|VT_INT]
-##    getter[VT_BYREF|VT_UINT]
+    # these are missing:
+    ##    getter[VT_ERROR]
+    ##    getter[VT_ARRAY]
+    ##    getter[VT_BYREF|VT_UI1]
+    ##    getter[VT_BYREF|VT_I2]
+    ##    getter[VT_BYREF|VT_I4]
+    ##    getter[VT_BYREF|VT_R4]
+    ##    getter[VT_BYREF|VT_R8]
+    ##    getter[VT_BYREF|VT_BOOL]
+    ##    getter[VT_BYREF|VT_ERROR]
+    ##    getter[VT_BYREF|VT_CY]
+    ##    getter[VT_BYREF|VT_DATE]
+    ##    getter[VT_BYREF|VT_BSTR]
+    ##    getter[VT_BYREF|VT_UNKNOWN]
+    ##    getter[VT_BYREF|VT_DISPATCH]
+    ##    getter[VT_BYREF|VT_ARRAY]
+    ##    getter[VT_BYREF|VT_VARIANT]
+    ##    getter[VT_BYREF]
+    ##    getter[VT_BYREF|VT_DECIMAL]
+    ##    getter[VT_BYREF|VT_I1]
+    ##    getter[VT_BYREF|VT_UI2]
+    ##    getter[VT_BYREF|VT_UI4]
+    ##    getter[VT_BYREF|VT_INT]
+    ##    getter[VT_BYREF|VT_UINT]
 
     value = property(_get_value, _set_value)
 
@@ -518,10 +534,8 @@ class tagVARIANT(Structure):
         return result
 
     def ChangeType(self, typecode):
-        _VariantChangeType(self,
-                           self,
-                           0,
-                           typecode)
+        _VariantChangeType(self, self, 0, typecode)
+
 
 VARIANT = tagVARIANT
 VARIANTARG = VARIANT
@@ -558,6 +572,7 @@ del v
 _carg_obj = type(byref(c_int()))
 from _ctypes import Array as _CArrayType
 
+
 @Patch(POINTER(VARIANT))
 class _(object):
     # Override the default .from_param classmethod of POINTER(VARIANT).
@@ -580,6 +595,7 @@ class _(object):
             return arg
         # anything else which can be converted to a VARIANT.
         return byref(VARIANT(arg))
+
     from_param = classmethod(from_param)
 
     def __setitem__(self, index, value):
@@ -587,22 +603,27 @@ class _(object):
         # variant[0] = value
         self[index].value = value
 
+
 ################################################################
 # interfaces, structures, ...
 class IEnumVARIANT(IUnknown):
-    _iid_ = GUID('{00020404-0000-0000-C000-000000000046}')
-    _idlflags_ = ['hidden']
+    _iid_ = GUID("{00020404-0000-0000-C000-000000000046}")
+    _idlflags_ = ["hidden"]
     _dynamic = False
+
     def __iter__(self):
         return self
 
     if sys.version_info >= (3, 0):
+
         def __next__(self):
             item, fetched = self.Next(1)
             if fetched:
                 return item
             raise StopIteration
+
     else:
+
         def next(self):
             item, fetched = self.Next(1)
             if fetched:
@@ -612,9 +633,9 @@ class IEnumVARIANT(IUnknown):
     def __getitem__(self, index):
         self.Reset()
         # Does not yet work.
-##        if isinstance(index, slice):
-##            self.Skip(index.start or 0)
-##            return self.Next(index.stop or sys.maxint)
+        ##        if isinstance(index, slice):
+        ##            self.Skip(index.start or 0)
+        ##            return self.Next(index.stop or sys.maxint)
         self.Skip(index)
         item, fetched = self.Next(1)
         if fetched:
@@ -629,21 +650,26 @@ class IEnumVARIANT(IUnknown):
             return v._get_value(dynamic=self._dynamic), fetched.value
         array = (VARIANT * celt)()
         self.__com_Next(celt, array, fetched)
-        result = [v._get_value(dynamic=self._dynamic) for v in array[:fetched.value]]
+        result = [v._get_value(dynamic=self._dynamic) for v in array[: fetched.value]]
         for v in array:
             v.value = None
         return result
 
+
 IEnumVARIANT._methods_ = [
-    COMMETHOD([], HRESULT, 'Next',
-              ( ['in'], c_ulong, 'celt' ),
-              ( ['out'], POINTER(VARIANT), 'rgvar' ),
-              ( ['out'], POINTER(c_ulong), 'pceltFetched' )),
-    COMMETHOD([], HRESULT, 'Skip',
-              ( ['in'], c_ulong, 'celt' )),
-    COMMETHOD([], HRESULT, 'Reset'),
-    COMMETHOD([], HRESULT, 'Clone',
-              ( ['out'], POINTER(POINTER(IEnumVARIANT)), 'ppenum' )),
+    COMMETHOD(
+        [],
+        HRESULT,
+        "Next",
+        (["in"], c_ulong, "celt"),
+        (["out"], POINTER(VARIANT), "rgvar"),
+        (["out"], POINTER(c_ulong), "pceltFetched"),
+    ),
+    COMMETHOD([], HRESULT, "Skip", (["in"], c_ulong, "celt")),
+    COMMETHOD([], HRESULT, "Reset"),
+    COMMETHOD(
+        [], HRESULT, "Clone", (["out"], POINTER(POINTER(IEnumVARIANT)), "ppenum")
+    ),
 ]
 
 
@@ -654,35 +680,49 @@ IEnumVARIANT._methods_ = [
 
 class tagEXCEPINFO(Structure):
     def __repr__(self):
-        return "<EXCEPINFO %s>" % \
-               ((self.wCode, self.bstrSource, self.bstrDescription, self.bstrHelpFile, self.dwHelpContext,
-                self.pfnDeferredFillIn, self.scode),)
+        return "<EXCEPINFO %s>" % (
+            (
+                self.wCode,
+                self.bstrSource,
+                self.bstrDescription,
+                self.bstrHelpFile,
+                self.dwHelpContext,
+                self.pfnDeferredFillIn,
+                self.scode,
+            ),
+        )
+
+
 tagEXCEPINFO._fields_ = [
-    ('wCode', WORD),
-    ('wReserved', WORD),
-    ('bstrSource', BSTR),
-    ('bstrDescription', BSTR),
-    ('bstrHelpFile', BSTR),
-    ('dwHelpContext', DWORD),
-    ('pvReserved', c_void_p),
-##    ('pfnDeferredFillIn', WINFUNCTYPE(HRESULT, POINTER(tagEXCEPINFO))),
-    ('pfnDeferredFillIn', c_void_p),
-    ('scode', SCODE),
+    ("wCode", WORD),
+    ("wReserved", WORD),
+    ("bstrSource", BSTR),
+    ("bstrDescription", BSTR),
+    ("bstrHelpFile", BSTR),
+    ("dwHelpContext", DWORD),
+    ("pvReserved", c_void_p),
+    ##    ('pfnDeferredFillIn', WINFUNCTYPE(HRESULT, POINTER(tagEXCEPINFO))),
+    ("pfnDeferredFillIn", c_void_p),
+    ("scode", SCODE),
 ]
 EXCEPINFO = tagEXCEPINFO
+
 
 class tagDISPPARAMS(Structure):
     _fields_ = [
         # C:/Programme/gccxml/bin/Vc71/PlatformSDK/oaidl.h 696
-        ('rgvarg', POINTER(VARIANTARG)),
-        ('rgdispidNamedArgs', POINTER(DISPID)),
-        ('cArgs', UINT),
-        ('cNamedArgs', UINT),
+        ("rgvarg", POINTER(VARIANTARG)),
+        ("rgdispidNamedArgs", POINTER(DISPID)),
+        ("cArgs", UINT),
+        ("cNamedArgs", UINT),
     ]
+
     def __del__(self):
         if self._b_needsfree_:
             for i in range(self.cArgs):
                 self.rgvarg[i].value = None
+
+
 DISPPARAMS = tagDISPPARAMS
 
 DISPID_VALUE = 0
@@ -694,28 +734,47 @@ DISPID_CONSTRUCTOR = -6
 DISPID_DESTRUCTOR = -7
 DISPID_COLLECT = -8
 
+
 class IDispatch(IUnknown):
     _iid_ = GUID("{00020400-0000-0000-C000-000000000046}")
     _methods_ = [
-        COMMETHOD([], HRESULT, 'GetTypeInfoCount',
-                  (['out'], POINTER(UINT) ) ),
-        COMMETHOD([], HRESULT, 'GetTypeInfo',
-                  (['in'], UINT, 'index'),
-                  (['in'], LCID, 'lcid', 0),
-## Normally, we would declare this parameter in this way:
-##                  (['out'], POINTER(POINTER(ITypeInfo)) ) ),
-## but we cannot import comtypes.typeinfo at the top level (recursive imports!).
-                  (['out'], POINTER(POINTER(IUnknown)) ) ),
-        STDMETHOD(HRESULT, 'GetIDsOfNames', [POINTER(IID), POINTER(c_wchar_p),
-                                             UINT, LCID, POINTER(DISPID)]),
-        STDMETHOD(HRESULT, 'Invoke', [DISPID, POINTER(IID), LCID, WORD,
-                                      POINTER(DISPPARAMS), POINTER(VARIANT),
-                                      POINTER(EXCEPINFO), POINTER(UINT)]),
+        COMMETHOD([], HRESULT, "GetTypeInfoCount", (["out"], POINTER(UINT))),
+        COMMETHOD(
+            [],
+            HRESULT,
+            "GetTypeInfo",
+            (["in"], UINT, "index"),
+            (["in"], LCID, "lcid", 0),
+            ## Normally, we would declare this parameter in this way:
+            ##                  (['out'], POINTER(POINTER(ITypeInfo)) ) ),
+            ## but we cannot import comtypes.typeinfo at the top level (recursive imports!).
+            (["out"], POINTER(POINTER(IUnknown))),
+        ),
+        STDMETHOD(
+            HRESULT,
+            "GetIDsOfNames",
+            [POINTER(IID), POINTER(c_wchar_p), UINT, LCID, POINTER(DISPID)],
+        ),
+        STDMETHOD(
+            HRESULT,
+            "Invoke",
+            [
+                DISPID,
+                POINTER(IID),
+                LCID,
+                WORD,
+                POINTER(DISPPARAMS),
+                POINTER(VARIANT),
+                POINTER(EXCEPINFO),
+                POINTER(UINT),
+            ],
+        ),
     ]
 
     def GetTypeInfo(self, index, lcid=0):
         """Return type information.  Index 0 specifies typeinfo for IDispatch"""
         import comtypes.typeinfo
+
         result = self._GetTypeInfo(index, lcid)
         return result.QueryInterface(comtypes.typeinfo.ITypeInfo)
 
@@ -745,8 +804,7 @@ class IDispatch(IUnknown):
                 dp.rgdispidNamedArgs = pointer(DISPID(DISPID_PROPERTYPUT))
             dp.rgvarg = array
 
-        self.__com_Invoke(memid, riid_null, lcid, invkind,
-                          dp, var, None, argerr)
+        self.__com_Invoke(memid, riid_null, lcid, invkind, dp, var, None, argerr)
         return var._get_value(dynamic=True)
 
     def Invoke(self, dispid, *args, **kw):
@@ -759,7 +817,7 @@ class IDispatch(IUnknown):
         #     objects referred to by rgvarg[ ] or placed in *pVarResult.
         #
         # For comtypes this is handled in DISPPARAMS.__del__ and VARIANT.__del__.
-        _invkind = kw.pop("_invkind", 1) # DISPATCH_METHOD
+        _invkind = kw.pop("_invkind", 1)  # DISPATCH_METHOD
         _lcid = kw.pop("_lcid", 0)
         if kw:
             raise ValueError("named parameters not yet implemented")
@@ -768,7 +826,7 @@ class IDispatch(IUnknown):
         excepinfo = EXCEPINFO()
         argerr = c_uint()
 
-        if _invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF): # propput
+        if _invkind in (DISPATCH_PROPERTYPUT, DISPATCH_PROPERTYPUTREF):  # propput
             array = (VARIANT * len(args))()
 
             for i, a in enumerate(args[::-1]):
@@ -791,14 +849,26 @@ class IDispatch(IUnknown):
             dp.rgvarg = array
 
         try:
-            self.__com_Invoke(dispid, riid_null, _lcid, _invkind, byref(dp),
-                              byref(result), byref(excepinfo), byref(argerr))
+            self.__com_Invoke(
+                dispid,
+                riid_null,
+                _lcid,
+                _invkind,
+                byref(dp),
+                byref(result),
+                byref(excepinfo),
+                byref(argerr),
+            )
         except COMError as err:
             (hresult, text, details) = err.args
             if hresult == DISP_E_EXCEPTION:
-                details = (excepinfo.bstrDescription, excepinfo.bstrSource,
-                           excepinfo.bstrHelpFile, excepinfo.dwHelpContext,
-                           excepinfo.scode)
+                details = (
+                    excepinfo.bstrDescription,
+                    excepinfo.bstrSource,
+                    excepinfo.bstrHelpFile,
+                    excepinfo.dwHelpContext,
+                    excepinfo.scode,
+                )
                 raise COMError(hresult, text, details)
             elif hresult == DISP_E_PARAMNOTFOUND:
                 # MSDN says: You get the error DISP_E_PARAMNOTFOUND
@@ -813,9 +883,11 @@ class IDispatch(IUnknown):
                 # coerced.
                 #
                 # Hm, should we raise TypeError, or COMError?
-                raise COMError(hresult, text,
-                               ("TypeError: Parameter %s" % (argerr.value + 1),
-                                args))
+                raise COMError(
+                    hresult,
+                    text,
+                    ("TypeError: Parameter %s" % (argerr.value + 1), args),
+                )
             raise
         return result._get_value(dynamic=True)
 
@@ -839,29 +911,22 @@ _arraycode_to_vartype = {
     "L": VT_UI4,
     "H": VT_UI2,
     "B": VT_UI1,
-    }
+}
 
 _ctype_to_vartype = {
     c_byte: VT_I1,
     c_ubyte: VT_UI1,
-
     c_short: VT_I2,
     c_ushort: VT_UI2,
-
     c_long: VT_I4,
     c_ulong: VT_UI4,
-
     c_float: VT_R4,
     c_double: VT_R8,
-
     c_longlong: VT_I8,
     c_ulonglong: VT_UI8,
-
     VARIANT_BOOL: VT_BOOL,
-
     BSTR: VT_BSTR,
     VARIANT: VT_VARIANT,
-
     # SAFEARRAY(VARIANT *)
     #
     # It is unlear to me if this is allowed or not.  Apparently there
@@ -876,15 +941,13 @@ _ctype_to_vartype = {
     # We have this code here to make sure that comtypes can import
     # such a typelib, although calling ths method will fail because
     # such an array cannot be created.
-    POINTER(VARIANT): VT_BYREF|VT_VARIANT,
-
+    POINTER(VARIANT): VT_BYREF | VT_VARIANT,
     # This is needed to import Esri ArcObjects (esriSystem.olb).
-    POINTER(BSTR): VT_BYREF|VT_BSTR,
-
+    POINTER(BSTR): VT_BYREF | VT_BSTR,
     # These are not yet implemented:
-##    POINTER(IUnknown): VT_UNKNOWN,
-##    POINTER(IDispatch): VT_DISPATCH,
-    }
+    ##    POINTER(IUnknown): VT_UNKNOWN,
+    ##    POINTER(IDispatch): VT_DISPATCH,
+}
 
 _vartype_to_ctype = {}
 for c, v in _ctype_to_vartype.items():
@@ -892,7 +955,6 @@ for c, v in _ctype_to_vartype.items():
 _vartype_to_ctype[VT_INT] = _vartype_to_ctype[VT_I4]
 _vartype_to_ctype[VT_UINT] = _vartype_to_ctype[VT_UI4]
 _ctype_to_vartype[c_char] = VT_UI1
-
 
 
 try:

@@ -3,14 +3,13 @@ from ctypes import POINTER
 import comtypes
 from comtypes.client import CreateObject, GetModule
 
-GetModule('oleacc.dll')
+GetModule("oleacc.dll")
 from comtypes.gen.Accessibility import IAccessible
 
 
 class TestCase(unittest.TestCase):
-
     def setUp(self):
-        self.ie = CreateObject('InternetExplorer.application')
+        self.ie = CreateObject("InternetExplorer.application")
 
     def tearDown(self):
         self.ie.Quit()
@@ -22,6 +21,7 @@ class TestCase(unittest.TestCase):
         sp = ie.Document.Body.QueryInterface(comtypes.IServiceProvider)
         pacc = sp.QueryService(IAccessible._iid_, IAccessible)
         self.assertEqual(type(pacc), POINTER(IAccessible))
+
 
 if __name__ == "__main__":
     unittest.main()

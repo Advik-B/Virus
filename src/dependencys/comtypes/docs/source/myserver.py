@@ -2,9 +2,11 @@ import comtypes
 import comtypes.server.localserver
 
 from comtypes.client import GetModule
+
 GetModule("mytypelib.tlb")
 
 from comtypes.gen.MyTypeLib import MyObject
+
 
 class MyObjectImpl(MyObject):
     # registry entries
@@ -18,6 +20,8 @@ class MyObjectImpl(MyObject):
     def MyMethod(self, a, b):
         return a + b
 
+
 if __name__ == "__main__":
     from comtypes.server.register import UseCommandLine
+
     UseCommandLine(MyObjectImpl)

@@ -9,12 +9,14 @@ comtypes.client.GetModule("scrrun.dll")
 from comtypes.gen import Scripting
 
 import comtypes.test
+
 comtypes.test.requires("ui")
 
 if sys.version_info >= (3, 0):
     text_type = str
 else:
     text_type = unicode
+
 
 class Test(ut.TestCase):
     def test_progid(self):
@@ -37,35 +39,44 @@ class Test(ut.TestCase):
         tlib = comtypes.client.GetModule(clsid)
 
     def test_remote(self):
-        ie = comtypes.client.CreateObject("InternetExplorer.Application",
-                                          machine="localhost")
+        ie = comtypes.client.CreateObject(
+            "InternetExplorer.Application", machine="localhost"
+        )
         self.assertEqual(ie.Visible, False)
         ie.Visible = 1
         # on a remote machine, this may not work.  Probably depends on
         # how the server is run.
         self.assertEqual(ie.Visible, True)
-        self.assertEqual(0, ie.Quit()) # 0 == S_OK
+        self.assertEqual(0, ie.Quit())  # 0 == S_OK
 
     def test_server_info(self):
         serverinfo = COSERVERINFO()
-        serverinfo.pwszName = 'localhost'
+        serverinfo.pwszName = "localhost"
         pServerInfo = byref(serverinfo)
 
-        self.assertRaises(ValueError, comtypes.client.CreateObject,
-                "InternetExplorer.Application", machine='localhost',
-                pServerInfo=pServerInfo)
-        ie = comtypes.client.CreateObject("InternetExplorer.Application",
-                                          pServerInfo=pServerInfo)
+        self.assertRaises(
+            ValueError,
+            comtypes.client.CreateObject,
+            "InternetExplorer.Application",
+            machine="localhost",
+            pServerInfo=pServerInfo,
+        )
+        ie = comtypes.client.CreateObject(
+            "InternetExplorer.Application", pServerInfo=pServerInfo
+        )
         self.assertEqual(ie.Visible, False)
         ie.Visible = 1
         # on a remote machine, this may not work.  Probably depends on
         # how the server is run.
         self.assertEqual(ie.Visible, True)
-        self.assertEqual(0, ie.Quit()) # 0 == S_OK
+        self.assertEqual(0, ie.Quit())  # 0 == S_OK
+
 
 def test_main():
     from test import test_support
+
     test_support.run_unittest(Test)
+
 
 if __name__ == "__main__":
     ut.main()

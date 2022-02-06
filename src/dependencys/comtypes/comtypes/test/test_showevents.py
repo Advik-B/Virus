@@ -7,16 +7,18 @@ from comtypes.test import requires
 # This test is unreliable...
 requires("events")
 
-class EventsTest(unittest.TestCase):
 
+class EventsTest(unittest.TestCase):
     def test(self):
         import comtypes.test.test_showevents
+
         doctest.testmod(comtypes.test.test_showevents, optionflags=doctest.ELLIPSIS)
 
     # These methods are never called, they only contain doctests.
     if sys.version_info >= (3, 0):
+
         def IE_ShowEvents(self):
-            '''
+            """
             >>> from comtypes.client import CreateObject, ShowEvents, PumpEvents
             >>>
             >>> o = CreateObject("InternetExplorer.Application")
@@ -66,10 +68,12 @@ class EventsTest(unittest.TestCase):
             >>> res = PumpEvents(0.01)
             Event DWebBrowserEvents2_OnQuit(None)
             >>>
-            '''
+            """
+
     else:
+
         def IE_ShowEvents(self):
-            '''
+            """
             >>> from comtypes.client import CreateObject, ShowEvents, PumpEvents
             >>>
             >>> o = CreateObject("InternetExplorer.Application")
@@ -119,8 +123,8 @@ class EventsTest(unittest.TestCase):
             >>> res = PumpEvents(0.01)
             Event DWebBrowserEvents2_OnQuit(None)
             >>>
-            '''
-        
+            """
+
     def IE_GetEvents(self):
         """
         >>> from comtypes.client import CreateObject, GetEvents, PumpEvents
@@ -142,7 +146,7 @@ class EventsTest(unittest.TestCase):
         """
 
     def Excel_Events(self):
-        '''
+        """
         >>> from comtypes.client import CreateObject, ShowEvents, PumpEvents
         >>>
         >>> o = CreateObject("Excel.Application")
@@ -186,10 +190,10 @@ class EventsTest(unittest.TestCase):
         Event AppEvents_WindowDeactivate(None, <POINTER(_Workbook) ...>, <POINTER(Window) ...>)
         Event AppEvents_WorkbookDeactivate(None, <POINTER(_Workbook) ...>)
         >>>
-        '''
+        """
 
     def Excel_Events_2(self):
-        '''
+        """
         >>> from comtypes.client import CreateObject, GetEvents, PumpEvents
         >>>
         >>> o = CreateObject("Excel.Application")
@@ -213,10 +217,10 @@ class EventsTest(unittest.TestCase):
         >>>
         >>> res = o.Quit()
         >>>
-        '''
+        """
 
     def Word_Events(self):
-        '''
+        """
         >>> from comtypes.client import CreateObject, ShowEvents, PumpEvents
         >>>
         >>> o = CreateObject("Word.Application")
@@ -259,7 +263,8 @@ class EventsTest(unittest.TestCase):
         Event ApplicationEvents4_DocumentChange(None)
         Event ApplicationEvents4_Quit(None)
         >>>
-        '''
+        """
+
 
 if __name__ == "__main__":
     unittest.main()

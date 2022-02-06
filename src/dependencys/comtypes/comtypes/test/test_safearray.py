@@ -9,7 +9,15 @@ from decimal import Decimal
 import unittest
 
 from comtypes.automation import (
-    VARIANT, VT_ARRAY, VT_VARIANT, VT_I4, VT_R4, VT_R8, VT_BSTR, VARIANT_BOOL)
+    VARIANT,
+    VT_ARRAY,
+    VT_VARIANT,
+    VT_I4,
+    VT_R4,
+    VT_R8,
+    VT_BSTR,
+    VARIANT_BOOL,
+)
 from comtypes.automation import _midlSAFEARRAY
 from comtypes.safearray import safearray_as_ndarray
 from comtypes._safearray import SafeArrayGetVartype
@@ -24,6 +32,7 @@ def get_array(sa):
 def com_refcnt(o):
     """Return the COM refcount of an interface pointer"""
     import gc
+
     gc.collect()
     gc.collect()
     o.AddRef()
@@ -62,15 +71,12 @@ class VariantTestCase(unittest.TestCase):
         self.assertEqual(tuple(a.tolist()), v.value)
 
     def test_2dim_array(self):
-        data = ((1, 2, 3, 4),
-                (5, 6, 7, 8),
-                (9, 10, 11, 12))
+        data = ((1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12))
         v = VARIANT(data)
         self.assertEqual(v.value, data)
 
 
 class SafeArrayTestCase(unittest.TestCase):
-
     def test_equality(self):
         a = _midlSAFEARRAY(c_long)
         b = _midlSAFEARRAY(c_long)
@@ -83,10 +89,8 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertNotEqual(a, c)
 
         # XXX remove:
-        self.assertEqual((a._itemtype_, a._vartype_),
-                             (c_long, VT_I4))
-        self.assertEqual((c._itemtype_, c._vartype_),
-                             (BSTR, VT_BSTR))
+        self.assertEqual((a._itemtype_, a._vartype_), (c_long, VT_I4))
+        self.assertEqual((c._itemtype_, c._vartype_), (BSTR, VT_BSTR))
 
     def test_nested_contexts(self):
         np = get_numpy()
@@ -128,7 +132,7 @@ class SafeArrayTestCase(unittest.TestCase):
         arr = get_array(sa)
 
         self.assertTrue(isinstance(arr, np.ndarray))
-        self.assertEqual(np.dtype('<U1'), arr.dtype)
+        self.assertEqual(np.dtype("<U1"), arr.dtype)
         self.assertTrue((arr == ("a", "b", "c")).all())
         self.assertEqual(SafeArrayGetVartype(sa), VT_BSTR)
 
@@ -193,9 +197,7 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertEqual(np.dtype(np.double), arr.dtype)
         self.assertTrue((arr == (0.0,) * 32).all())
 
-        data = ((1.0, 2.0, 3.0),
-                (4.0, 5.0, 6.0),
-                (7.0, 8.0, 9.0))
+        data = ((1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (7.0, 8.0, 9.0))
         a = np.array(data, dtype=np.double)
         pat[0] = a
         arr = get_array(pat[0])
@@ -204,9 +206,7 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertTrue((arr == data).all())
 
         data = ((1.0, 2.0), (3.0, 4.0), (5.0, 6.0))
-        a = np.array(data,
-                        dtype=np.double,
-                        order="F")
+        a = np.array(data, dtype=np.double, order="F")
         pat[0] = a
         arr = get_array(pat[0])
         self.assertTrue(isinstance(arr, np.ndarray))
@@ -265,6 +265,7 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertTrue(a is t)
 
         from comtypes.typeinfo import CreateTypeLib
+
         # will never be saved to disk
         punk = CreateTypeLib("spam").QueryInterface(IUnknown)
 
@@ -292,6 +293,7 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertTrue(a is t)
 
         from comtypes.typeinfo import CreateTypeLib
+
         # will never be saved to disk
         punk = CreateTypeLib("spam").QueryInterface(IUnknown)
 
@@ -304,7 +306,7 @@ class SafeArrayTestCase(unittest.TestCase):
 
         # Unpacking the array must not change the refcount, and must
         # return an equal object.
-        self.assertEqual((punk,)*4, sa[0])
+        self.assertEqual((punk,) * 4, sa[0])
         self.assertEqual(initial + 4, com_refcnt(punk))
 
         del sa
@@ -326,8 +328,8 @@ class SafeArrayTestCase(unittest.TestCase):
         a, b = com_refcnt(plib), com_refcnt(punk)
         sa = t.from_param([plib, punk, plib])
 
-####        self.failUnlessEqual((plib, punk, plib), sa[0])
-        self.assertEqual((a+2, b+1), (com_refcnt(plib), com_refcnt(punk)))
+        ####        self.failUnlessEqual((plib, punk, plib), sa[0])
+        self.assertEqual((a + 2, b + 1), (com_refcnt(plib), com_refcnt(punk)))
 
         del sa
         self.assertEqual((a, b), (com_refcnt(plib), com_refcnt(punk)))
@@ -342,6 +344,7 @@ class SafeArrayTestCase(unittest.TestCase):
         self.assertTrue(a is t)
 
         from comtypes.typeinfo import CreateTypeLib
+
         # will never be saved to disk
         punk = CreateTypeLib("spam").QueryInterface(IUnknown)
 
@@ -358,7 +361,7 @@ class SafeArrayTestCase(unittest.TestCase):
         arr = get_array(sa)
         self.assertTrue(isinstance(arr, np.ndarray))
         self.assertEqual(np.dtype(object), arr.dtype)
-        self.assertTrue((arr == (punk,)*4).all())
+        self.assertTrue((arr == (punk,) * 4).all())
         self.assertEqual(initial + 8, com_refcnt(punk))
 
         del arr
@@ -389,11 +392,14 @@ class SafeArrayTestCase(unittest.TestCase):
 
         sa = t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
 
-        self.assertEqual([(x.red, x.green, x.blue) for x in sa[0]],
-                             [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)])
+        self.assertEqual(
+            [(x.red, x.green, x.blue) for x in sa[0]],
+            [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)],
+        )
 
         def doit():
             t.from_param([MYCOLOR(0, 0, 0), MYCOLOR(1, 2, 3)])
+
         bytes = find_memleak(doit)
         self.assertFalse(bytes, "Leaks %d bytes" % bytes)
 
@@ -418,7 +424,7 @@ class SafeArrayTestCase(unittest.TestCase):
         if arr.dtype is np.dtype(object):
             data = [(x.red, x.green, x.blue) for x in arr]
         else:
-            float_dtype = np.dtype('float64')
+            float_dtype = np.dtype("float64")
             self.assertIs(arr.dtype[0], float_dtype)
             self.assertIs(arr.dtype[1], float_dtype)
             self.assertIs(arr.dtype[2], float_dtype)
@@ -434,12 +440,14 @@ class SafeArrayTestCase(unittest.TestCase):
         except AttributeError:
             return
 
-        dates = np.array([
-            np.datetime64("2000-01-01T05:30:00", "s"),
-            np.datetime64("1800-01-01T05:30:00", "ms"),
-            np.datetime64("2014-03-07T00:12:56", "us"),
-            np.datetime64("2000-01-01T12:34:56", "ns"),
-        ])
+        dates = np.array(
+            [
+                np.datetime64("2000-01-01T05:30:00", "s"),
+                np.datetime64("1800-01-01T05:30:00", "ms"),
+                np.datetime64("2014-03-07T00:12:56", "us"),
+                np.datetime64("2000-01-01T12:34:56", "ns"),
+            ]
+        )
 
         t = _midlSAFEARRAY(VARIANT)
         sa = t.from_param(dates)
@@ -469,7 +477,7 @@ if is_resource_enabled("pythoncom"):
         # PyObject *PyCom_PyObjectFromVariant(const VARIANT *var)
         unpack = _dll.PyCom_PyObjectFromVariant
         unpack.restype = py_object
-        unpack.argtypes = POINTER(VARIANT),
+        unpack.argtypes = (POINTER(VARIANT),)
 
         # c:/sf/pywin32/com/win32com/src/oleargs.cpp 54
         # BOOL PyCom_VariantFromPyObject(PyObject *obj, VARIANT *var)
@@ -496,20 +504,20 @@ if is_resource_enabled("pythoncom"):
                 self.assertEqual(unpack(variant), data)
 
             def test_3dim(self):
-                data = ( ( (1, 2), (3, 4), (5, 6) ),
-                         ( (7, 8), (9, 10), (11, 12) ) )
+                data = (((1, 2), (3, 4), (5, 6)), ((7, 8), (9, 10), (11, 12)))
                 variant = pack(data)
                 self.assertEqual(variant.value, data)
                 self.assertEqual(unpack(variant), data)
 
             def test_4dim(self):
-                data = ( ( ( ( 1,  2), ( 3,  4) ),
-                           ( ( 5,  6), ( 7,  8) ) ),
-                         ( ( ( 9, 10), (11, 12) ),
-                           ( (13, 14), (15, 16) ) ) )
+                data = (
+                    (((1, 2), (3, 4)), ((5, 6), (7, 8))),
+                    (((9, 10), (11, 12)), ((13, 14), (15, 16))),
+                )
                 variant = pack(data)
                 self.assertEqual(variant.value, data)
                 self.assertEqual(unpack(variant), data)
+
 
 if __name__ == "__main__":
     unittest.main()

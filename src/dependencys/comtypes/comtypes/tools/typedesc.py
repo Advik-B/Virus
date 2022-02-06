@@ -4,6 +4,7 @@
 import ctypes
 from comtypes.tools.typedesc_base import *
 
+
 class TypeLib(object):
     def __init__(self, name, guid, major, minor, doc=None):
         self.name = name
@@ -13,13 +14,20 @@ class TypeLib(object):
         self.doc = doc
 
     def __repr__(self):
-        return "<TypeLib(%s: %s, %s, %s)>" % (self.name, self.guid, self.major, self.minor)
+        return "<TypeLib(%s: %s, %s, %s)>" % (
+            self.name,
+            self.guid,
+            self.major,
+            self.minor,
+        )
+
 
 class Constant(object):
     def __init__(self, name, typ, value):
         self.name = name
         self.typ = typ
         self.value = value
+
 
 class External(object):
     def __init__(self, tlib, name, size, align, docs=None):
@@ -36,10 +44,12 @@ class External(object):
         # codegen might call this
         return self
 
+
 class SAFEARRAYType(object):
     def __init__(self, typ):
         self.typ = typ
         self.align = self.size = ctypes.sizeof(ctypes.c_void_p) * 8
+
 
 class ComMethod(object):
     # custom COM method, parsed from typelib
@@ -55,6 +65,7 @@ class ComMethod(object):
     def add_argument(self, typ, name, idlflags, default):
         self.arguments.append((typ, name, idlflags, default))
 
+
 class DispMethod(object):
     # dispatchable COM method, parsed from typelib
     def __init__(self, dispid, invkind, name, returns, idlflags, doc):
@@ -69,6 +80,7 @@ class DispMethod(object):
     def add_argument(self, typ, name, idlflags, default):
         self.arguments.append((typ, name, idlflags, default))
 
+
 class DispProperty(object):
     # dispatchable COM property, parsed from typelib
     def __init__(self, dispid, name, typ, idlflags, doc):
@@ -78,13 +90,16 @@ class DispProperty(object):
         self.idlflags = idlflags
         self.doc = doc
 
+
 class DispInterfaceHead(object):
     def __init__(self, itf):
         self.itf = itf
 
+
 class DispInterfaceBody(object):
     def __init__(self, itf):
         self.itf = itf
+
 
 class DispInterface(object):
     def __init__(self, name, members, base, iid, idlflags):
@@ -102,13 +117,16 @@ class DispInterface(object):
     def get_head(self):
         return self.itf_head
 
+
 class ComInterfaceHead(object):
     def __init__(self, itf):
         self.itf = itf
 
+
 class ComInterfaceBody(object):
     def __init__(self, itf):
         self.itf = itf
+
 
 class ComInterface(object):
     def __init__(self, name, members, base, iid, idlflags):
@@ -125,6 +143,7 @@ class ComInterface(object):
 
     def get_head(self):
         return self.itf_head
+
 
 class CoClass(object):
     def __init__(self, name, clsid, idlflags, tlibattr):
