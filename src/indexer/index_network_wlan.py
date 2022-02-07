@@ -118,6 +118,7 @@ def get_wifi_status():
     elif ifaces.status() == const.IFACE_DISCONNECTED:
         return "disconnected"
 
+
 def get_wifi_ssid():
     """
     Get the ssid of the wifi
@@ -125,3 +126,4 @@ def get_wifi_ssid():
     """
     ifaces = wifi.interfaces()[0]
     return ifaces.current_bssid()
+
